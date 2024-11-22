@@ -10,7 +10,6 @@ from models.prepare import prepare_model
 from utils.dataset import prepare_imagenet_test_data, prepare_cifar10_test_data, prepare_cifar100_test_data, prepare_cifar10_test_data_bybatch,prepare_cifar100_test_data_bybatch, prepare_imagenet_test_data_bybatch,prepare_imagenet_test_data_non_iid
 from utils.utils import set_seed, str2bool
 from utils.eval import validate, group_validate, validate_bybatch
-from utils.eval_dynamic import validate_bybatch_dynamic
 from utils.config import set_torch_hub
 
 from utils.cli_utils import AverageMeter, ProgressMeter, accuracy

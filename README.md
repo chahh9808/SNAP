@@ -10,7 +10,7 @@
     conda activate snap
     #CUDA=12.4
     pip install -r requirements.txt
-    pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113 -U
+    pip3 install torch torchvision torchaudio
     pip install git+https://github.com/RobustBench/robustbench.git
     ```
 2. Modify `data_root` in `utils/config.py` pointing to the data root. -->
