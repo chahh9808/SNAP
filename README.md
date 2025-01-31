@@ -1,4 +1,4 @@
-# SNAP: SPARSE TEST-TIME ADAPTATION
+# SNAP: Low-latency Test-Time Adaptation with Sparse Updates
 
 ## Getting Started
 
