@@ -17,7 +17,7 @@
 
 ### Quick Example
 
-Run SNAP with Tent on Adaptation Rate 0.1.
+Run SNAP with Tent on CIFAR10-C, Adaptation Rate 0.1.
 ```shell
 # TENT (naive STTA)
 python3 cta_eval.py --data=cifar10 --alg=tent --model=resnet18 --batch_size=16 --lr=1e-4 --device=cuda --workers=2 --test_corrupt=0 --eval_mode=continual --adaptrate=0.1 --mem_size=16 --alginf --adst=basic
