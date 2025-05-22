@@ -172,7 +172,7 @@ wandb/
 # *.pt
 
 #script
-test_scripts/
+# test_scripts/
 tmppy/
 #log and graph output
 logs/
