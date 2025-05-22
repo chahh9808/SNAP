@@ -46,10 +46,10 @@ The main evaluation script is provided to compare the adaptation performance wit
 
 ```shell
 # Run Tent+SNAP vs Tent+naiveSTTA
-./test_script/tent/run_tent.sh
+./test_scripts/tent/run_tent.sh
 ```
 
-Similar scripts for other algorithms (CoTTA, EATA, SAR, and RoTTA) are also available in the `test_script` directory.
+Similar scripts for other algorithms (CoTTA, EATA, SAR, and RoTTA) are also available in the `test_scripts` directory.
 
 <!-- ### Efficiency Comparision Result
 
@@ -83,6 +83,7 @@ The following environment was used for testing and evaluation reported on the pa
 - **GPU Driver Version**: 550.144.03
 - **CUDA Version**: 12.4 (nvcc 12.4.131)
 - **GCC Version**: 12.3.0
+- **CPU Device**: Raspberry Pi 4
 
 You may experience compatibility issues with different driver/CUDA versions. Please ensure consistency with this tested setup where possible.
 
