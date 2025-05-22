@@ -7,9 +7,9 @@ import torch.nn as nn
 # import wandb
 
 from models.prepare import prepare_model
-from utils.dataset import prepare_imagenet_test_data, prepare_cifar10_test_data, prepare_cifar100_test_data, prepare_cifar10_test_data_bybatch,prepare_cifar100_test_data_bybatch, prepare_imagenet_test_data_bybatch,prepare_imagenet_test_data_non_iid
+from utils.dataset import prepare_imagenet_test_data, prepare_cifar10_test_data, prepare_cifar100_test_data, prepare_cifar10_test_data_bybatch,prepare_cifar100_test_data_bybatch, prepare_imagenet_test_data_bybatch,prepare_cifar10_test_data_dirichlet_skew, prepare_cifar100_test_data_dirichlet_skew, prepare_imagenet_test_data_dirichlet_skew
 from utils.utils import set_seed, str2bool
-from utils.eval import validate, group_validate, validate_bybatch
+from utils.eval import validate, validate_bybatch
 from utils.config import set_torch_hub
 
 from utils.cli_utils import AverageMeter, ProgressMeter, accuracy
@@ -64,7 +64,7 @@ def get_args():
     parser.add_argument('--model', default='resnet50', type=str)
 
     # general parameters, dataloader parameters
-    parser.add_argument('--seed', default=2024, type=int, help='seed for initializing training. ')
+    parser.add_argument('--seed', default=2025, type=int, help='seed for initializing training. ')
     parser.add_argument('--device', default='cuda', type=str, help='device to use.')
     parser.add_argument('--workers', default=4, type=int,
                         help='number of data loading workers (default: 4)')
@@ -76,7 +76,7 @@ def get_args():
 
     # batch config for eval
     parser.add_argument('--iters', default=-1, type=int, help='how many iterations for eval. [Default: -1 for all batches]')
-    parser.add_argument('--batch_size', default=64, type=int, help='mini-batch size (default: 64)')
+    parser.add_argument('--batch_size', default=16, type=int, help='mini-batch size (default: 16)')
     parser.add_argument('--support_batch', default=None, type=int, help='number of batches for support set (default: 1)')
     parser.add_argument('--merge_batches', default=False, type=str2bool,
                         help='whether to merge several batches of images into one batch. '
@@ -104,11 +104,6 @@ def get_args():
     parser.add_argument('--layer_grad_chkpt_segment', type=int, default=1, help='Num of segments per ResNet stage for gradient checkpointing.')
     parser.add_argument('--layer_t', type=int, default=0, help='Target layer number to calculate Doamin Centroid.')
 
-    # preliminary experiment
-    # parser.add_argument('--prelim', default=False, type=str2bool, help='Preliminary experiment.')
-    # parser.add_argument('--label_flip', default=False, type=str2bool, help='Extra label flip analysis.')
-    # parser.add_argument('--w_min', default=float('-inf'), type=float, help='minimum threshold for WDIST_TEST in memory')
-    # parser.add_argument('--w_max', default=float('inf'), type=float, help='maximum threshold for WDIST_TEST in memory')
     
     args = parser.parse_args()
 
@@ -142,19 +137,20 @@ def main(args):
     if args.seed is not None:
         set_seed(args.seed, True)
 
-    # all_corruptions = None
-    if args.data in ['cifar10', 'cifar100', 'IN']:
+    if args.data in ['cifar10', 'cifar100', 'IN', 'cifar10niid','cifar100niid','INniid']:
         corruptions = ['gaussian_noise', 'shot_noise',  'impulse_noise', 'defocus_blur',
                                'glass_blur',     'motion_blur', 'zoom_blur',      'snow',
                                'frost',           'fog',        'brightness',     'contrast',
                                'elastic_transform', 'pixelate', 'jpeg_compression', 'original']
         if args.test_corrupt == 'std':  # for continual eval only
             all_corruptions = corruptions[:-1]
+        elif args.test_corrupt == 'long':
+            all_corruptions = corruptions[:-1] * 10
         elif args.test_corrupt == 'org':
             all_corruptions = ['original']
         else:
             corruption_indices = [int(x) for x in args.test_corrupt.split(',')]
-            all_corruptions = [corruptions[i] for i in corruption_indices]        
+            all_corruptions = [corruptions[i] for i in corruption_indices]   
     else:
         raise NotImplementedError(f"data: {args.data}")
     print("All corruptions:", all_corruptions)
@@ -168,20 +164,21 @@ def main(args):
         prepare_data = prepare_cifar100_test_data
     elif args.data == 'IN':
         prepare_data = prepare_imagenet_test_data
+    elif args.data == 'cifar10niid':
+        prepare_data = prepare_cifar10_test_data_dirichlet_skew
+        args.data = 'cifar10'
+    elif args.data == 'cifar100niid':
+        prepare_data = prepare_cifar100_test_data_dirichlet_skew
+        args.data = 'cifar100'
+    elif args.data == 'INniid':
+        prepare_data = prepare_imagenet_test_data_dirichlet_skew
+        args.data = 'IN'
     else:
         raise NotImplementedError(f"data: {args.data}")
 
     # Prepare models
     subnet = prepare_model(args)
     subnet = subnet.to(args.device)
-
-    # prelim: extra source model for label flip analysis
-    # source_subnet = None
-    # if args.label_flip is True:
-    #     # temporarily create another source model for comparison
-    #     source_subnet = prepare_model(args)
-    #     source_subnet = source_subnet.to(args.device)
-    #     source_subnet.eval()
         
     # Prepare algorithms
     if args.alg == 'src':
@@ -284,7 +281,7 @@ def main(args):
             for i_adaptrate, adaptrate in enumerate(all_adaptrate):
                 print('Current adaption rate:', adaptrate)
 
-                acc, max_cache, avg_cache, data_list = validate(args,val_loader, adapt_model, source_subnet, args.device,
+                acc, max_cache, avg_cache, data_list = validate(args,val_loader, adapt_model, args.device,
                                         stop_at_step=args.iters)
                 info = f"[{i_corrupt}] {args.alg}@{corrupt} Acc: {acc:.2f}%"
                 print(info)

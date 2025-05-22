@@ -18,7 +18,7 @@ ALL_IN_MODELS = ['resnet18', 'rb_resnet50', 'MobNetV2', 'MobNetV3', 'VGG16BN', '
 
 
 def prepare_model(args, record_bn_cache=False):
-    if args.data == 'cifar10':
+    if args.data in ['cifar10']:
         if args.model.startswith('rb_'):
             raw_model_name = args.model[len('rb_'):]
             if raw_model_name == 'ResNeXt29_32x4d':
@@ -43,7 +43,7 @@ def prepare_model(args, record_bn_cache=False):
                                 model_dir=MODEL_PATHS['RobustBench_root'])
             subnet = make_checkpoint_resnet(
                 subnet, args.layer_grad_chkpt_segment, record_bn_cache=record_bn_cache)
-    elif args.data in ['IN', 'INniid']:
+    elif args.data in ['IN', 'IN-R', 'IN-S', 'IN-R-SPLIT']:
         if args.alg == 'arm':
             raise NotImplementedError(f"To load models")
         else:
@@ -164,6 +164,27 @@ def prepare_model(args, record_bn_cache=False):
 
     return subnet
 
+
+class ImageNetXMaskingLayer(torch.nn.Module):
+    """ Following: https://github.com/hendrycks/imagenet-r/blob/master/eval.py
+    """
+    def __init__(self, mask):
+        super().__init__()
+        self.mask = mask
+
+    def forward(self, x):
+        return x[:, self.mask]
+
+
+class ImageNetXWrapper(torch.nn.Module):
+    def __init__(self, model, mask):
+        super().__init__()
+        self.model = model
+        self.masking_layer = ImageNetXMaskingLayer(mask)
+
+    def forward(self, x):
+        logits = self.model(x)
+        return self.masking_layer(logits)
 
 def replace_bn(model, name, n_repalced=0, **abn_kwargs):
     copy_keys = ['eps', 'momentum', 'affine', 'track_running_stats']

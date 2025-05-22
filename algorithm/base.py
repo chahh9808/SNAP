@@ -39,7 +39,6 @@ class AdaptableModule(nn.Module):
                 
     def print_first_bn_layer_stats(self):
 
-        # 첫 번째 BN 레이어 찾기
         bn_layer = None
         for layer in self.model.modules():
             if isinstance(layer, nn.BatchNorm2d):
@@ -50,7 +49,6 @@ class AdaptableModule(nn.Module):
             print("모델에 BN 레이어가 없습니다.")
             return
 
-        # BN 레이어의 통계 출력
         print("첫 번째 BN 레이어의 통계:")
         print("  배치 평균:", bn_layer.running_mean[0])
         print("  배치 분산:", bn_layer.running_var[0])
@@ -58,7 +56,6 @@ class AdaptableModule(nn.Module):
         print("  beta:", bn_layer.bias)
     
     def print_first_ln_layer_stats(self):
-        # 첫 번째 LayerNorm 레이어 찾기
         ln_layer = None
         for layer in self.model.modules():
             if isinstance(layer, nn.LayerNorm):
@@ -69,7 +66,6 @@ class AdaptableModule(nn.Module):
             print("모델에 LayerNorm 레이어가 없습니다.")
             return
 
-        # LayerNorm 레이어의 affine 파라미터 출력
         print("첫 번째 LayerNorm 레이어의 통계:")
         if ln_layer.elementwise_affine:
             print("  gamma (weight):", ln_layer.weight)

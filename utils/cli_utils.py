@@ -119,7 +119,6 @@ class MovingAverage(object):
         self.sum += new_value
         self.count += 1
         if self.count > self.window_size:
-            # 이동 평균 윈도우 크기를 초과한 경우, 평균에서 가장 오래된 값을 제거
             self.sum -= self.sum / self.count
             self.count -= 1
             

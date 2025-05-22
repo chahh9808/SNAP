@@ -31,7 +31,7 @@ def get_confidence(logits: torch.Tensor) -> torch.Tensor:
     confidence, _ = torch.max(probabilities, dim=1)
     return confidence    
 
-def validate(args, val_loader, model, source_subnet, device, stop_at_step=-1):
+def validate(args, val_loader, model, device, stop_at_step=-1):
     TimeTracker.init_tracker()
     
     acc_mt = AverageMeter('Acc', ':6.2f')

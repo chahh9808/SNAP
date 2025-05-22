@@ -108,55 +108,80 @@ def prepare_imagenet_test_data(corruption, level, batch_size,
                         num_workers=workers, pin_memory=True)
     return test_set, loader
 
-def prepare_imagenet_test_data_non_iid(corruption, level, batch_size,
-                                       subset_size=None, workers=1, seed=None,
-                                       num_classes=1000,skew_ratio=0.5):
+def prepare_imagenet_test_data_dirichlet_skew(corruption, level, batch_size,
+                                              workers=1, seed=None, alpha=0.1,
+                                              num_classes=1000):
     """
-    Prepare non-iid test data for ImageNet based on label skew using skew_ratio.
+    Load ImageNet test data and apply Dirichlet(alpha)-based label skew.
+
+    :param corruption: Corruption type ('original' or corruption name from IN-C).
+    :param level: Corruption severity level (for IN-C).
+    :param batch_size: Batch size for DataLoader.
+    :param workers: DataLoader worker threads.
+    :param seed: Random seed.
+    :param alpha: Dirichlet alpha for label skewing (smaller = more skewed).
+    :param num_classes: Limit dataset to N classes (default = 1000).
+    :return: (skewed_dataset, DataLoader)
     """
-    print('non-iid')
     rng = np.random.RandomState(seed) if seed is not None else np.random
-    normalize = trns.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    normalize = trns.Normalize(mean=[0.485, 0.456, 0.406],
+                               std=[0.229, 0.224, 0.225])
 
     if corruption == 'original':
-        te_transforms = trns.Compose([trns.Resize(256), trns.CenterCrop(224), trns.ToTensor(),
-                                      normalize])
-        print('Test on the original test set')
+        te_transforms = trns.Compose([
+            trns.Resize(256), trns.CenterCrop(224), trns.ToTensor(), normalize
+        ])
+        print('Test on the original ImageNet val set')
         val_root = os.path.join(DATA_PATHS['IN'], 'val')
         test_set = ImageFolder(val_root, te_transforms)
+
     elif corruption in IN_C_corruptions:
-        te_transforms_imageC = trns.Compose([trns.CenterCrop(224),
-                                             trns.ToTensor(), normalize])
-        print('Test on %s level %d' % (corruption, level))
+        te_transforms_imageC = trns.Compose([
+            trns.CenterCrop(224), trns.ToTensor(), normalize
+        ])
+        print(f'Test on ImageNet-C: {corruption}, level {level}')
         val_root = os.path.join(DATA_PATHS['IN-C'], corruption, str(level))
         test_set = ImageFolder(val_root, te_transforms_imageC)
+
     else:
-        raise Exception(f'Corruption {corruption} not found!')
+        raise Exception(f'Corruption "{corruption}" not found!')
 
-    if num_classes is not None:
-        idxs = np.nonzero(np.array(test_set.targets) < num_classes)[0]
+    # Filter classes if num_classes < 1000
+    if num_classes is not None and num_classes < 1000:
+        labels = np.array(test_set.targets)
+        idxs = np.nonzero(labels < num_classes)[0]
         test_set = Subset(test_set, indices=idxs)
+        labels = labels[idxs]  # update labels accordingly
+    else:
+        labels = np.array(test_set.targets)
 
-    if subset_size is not None:
-        # Create a label distribution based on skew_ratio
-        targets = np.array(test_set.dataset.targets)
-        label_to_idxs = defaultdict(list)
-        for idx, label in enumerate(targets):
-            label_to_idxs[label].append(idx)
+    # Dirichlet label skew
+    unique_classes = np.unique(labels)
+    class_indices = [np.where(labels == y)[0] for y in unique_classes]
 
-        # Adjust the proportion of data per label
-        all_idxs = []
-        for label, idxs in label_to_idxs.items():
-            rng.shuffle(idxs)  # Shuffle indices for each label
-            keep_count = int(len(idxs) * (skew_ratio if label == 0 else (1 - skew_ratio)))
-            all_idxs.extend(idxs[:keep_count])
+    proportions = rng.dirichlet([alpha] * len(unique_classes))
+    total_samples = len(labels)
+    samples_per_class = (proportions * total_samples).astype(int)
 
-        all_idxs = rng.permutation(all_idxs)  # Shuffle final indices
-        test_set = Subset(test_set, indices=all_idxs)
+    # Fix rounding errors
+    while samples_per_class.sum() < total_samples:
+        samples_per_class[rng.randint(0, len(unique_classes))] += 1
+    while samples_per_class.sum() > total_samples:
+        samples_per_class[rng.randint(0, len(unique_classes))] -= 1
 
-    loader = DataLoader(test_set, batch_size=batch_size, shuffle=False,
+    selected_indices = []
+    for c, cls_idxs in enumerate(class_indices):
+        rng.shuffle(cls_idxs)
+        selected_indices.extend(cls_idxs[:samples_per_class[c]])
+
+    rng.shuffle(selected_indices)
+    skewed_subset = Subset(test_set, selected_indices)
+
+    loader = DataLoader(skewed_subset, batch_size=batch_size, shuffle=False,
                         num_workers=workers, pin_memory=True)
-    return test_set, loader
+
+    return skewed_subset, loader
+
 
 def prepare_imagenet_test_data_bybatch(corruption, level, batch_size,
                               subset_size=None, workers=1, seed=None,idx=None,datahelper=None):
@@ -218,24 +243,24 @@ def prepare_cifar10_test_data(corruption, level, batch_size,
                         num_workers=workers, pin_memory=True)
     return test_set, loader
 
-def prepare_cifar10_test_data_non_iid_skew(corruption, level, batch_size,
-                                           subset_size=None, workers=1, seed=None, skew_ratio=1.0):
+def prepare_cifar10_test_data_dirichlet_skew(corruption, level, batch_size,
+                                             workers=1, seed=None, alpha=0.1):
     """
-    Load CIFAR-10 test data in a non-iid manner with a uniform skew ratio.
+    Load CIFAR-10 test data and apply Dirichlet(alpha)-based label skew globally.
 
     :param corruption: Corruption type ('original' or other supported corruptions).
     :param level: Corruption level for corrupted data.
     :param batch_size: Batch size for the DataLoader.
-    :param subset_size: Size of the subset of the dataset (optional).
     :param workers: Number of workers for the DataLoader.
     :param seed: Random seed for reproducibility.
-    :param skew_ratio: Ratio to uniformly reduce data for each label (e.g., 0.5 keeps 50% per label).
-    :return: (test_set, DataLoader) where test_set is the dataset and DataLoader is the DataLoader for it.
+    :param alpha: Dirichlet alpha value to skew label distribution (smaller = more skewed).
+    :return: (test_set, DataLoader)
     """
     rng = np.random.RandomState(seed) if seed is not None else np.random
 
     normalize = trns.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
     trans = trns.Compose([trns.ToTensor(), normalize])
+
     if corruption == 'original':
         test_set = CIFAR10(DATA_PATHS['Cifar10'], train=False, transform=trans, download=True)
     elif corruption in CIFAR10_CORRUPTIONS:
@@ -244,31 +269,33 @@ def prepare_cifar10_test_data_non_iid_skew(corruption, level, batch_size,
     else:
         raise RuntimeError(f"Not supported corruption: {corruption}")
 
-    # Apply skew based on skew_ratio
-    if skew_ratio < 1.0:
-        label_indices = {label: [] for label in range(10)}  # Assuming 10 labels in CIFAR-10
-        for idx, (_, label) in enumerate(test_set):
-            label_indices[label].append(idx)
+    labels = np.array([label for _, label in test_set])
+    num_classes = np.max(labels) + 1
+    class_indices = [np.where(labels == y)[0] for y in range(num_classes)]
 
-        selected_indices = []
-        for label, indices in label_indices.items():
-            rng.shuffle(indices)
-            num_samples = int(skew_ratio * len(indices))
-            selected_indices.extend(indices[:num_samples])
+    # Sample class proportions using Dirichlet distribution
+    proportions = rng.dirichlet([alpha] * num_classes)
+    total_samples = len(labels)
+    samples_per_class = (proportions * total_samples).astype(int)
 
-        rng.shuffle(selected_indices)  # Shuffle the selected indices for randomization
-        test_set = Subset(test_set, selected_indices)
+    # Fix rounding issues
+    while samples_per_class.sum() < total_samples:
+        samples_per_class[rng.randint(0, num_classes)] += 1
+    while samples_per_class.sum() > total_samples:
+        samples_per_class[rng.randint(0, num_classes)] -= 1
 
-    # If subset_size is specified, further reduce the dataset
-    if subset_size is not None:
-        idxs = np.arange(len(test_set))
-        idxs = rng.permutation(idxs)
-        idxs = idxs[:subset_size]
-        test_set = Subset(test_set, idxs)
+    selected_indices = []
+    for c in range(num_classes):
+        rng.shuffle(class_indices[c])
+        selected_indices.extend(class_indices[c][:samples_per_class[c]])
 
-    loader = DataLoader(test_set, batch_size=batch_size, shuffle=False,  # Shuffle is False for deterministic splits
+    rng.shuffle(selected_indices)
+    skewed_subset = Subset(test_set, selected_indices)
+
+    loader = DataLoader(skewed_subset, batch_size=batch_size, shuffle=False,
                         num_workers=workers, pin_memory=True)
-    return test_set, loader
+    return skewed_subset, loader
+
 
 def prepare_cifar10_test_data_bybatch(corruption, level, batch_size,
                               subset_size=None, workers=1, seed=None,idx=None,datahelper=None):
@@ -338,3 +365,57 @@ def prepare_cifar100_test_data(corruption, level, batch_size,
     loader = DataLoader(test_set, batch_size=batch_size, shuffle=False,
                         num_workers=workers, pin_memory=True)
     return test_set, loader
+
+
+def prepare_cifar100_test_data_dirichlet_skew(corruption, level, batch_size,
+                                             workers=1, seed=None, alpha=0.01):
+    """
+    Load CIFAR-100 test data and apply Dirichlet(alpha)-based label skew globally.
+
+    :param corruption: Corruption type ('original' or other supported corruptions).
+    :param level: Corruption level for corrupted data.
+    :param batch_size: Batch size for the DataLoader.
+    :param workers: Number of workers for the DataLoader.
+    :param seed: Random seed for reproducibility.
+    :param alpha: Dirichlet alpha value to skew label distribution (smaller = more skewed).
+    :return: (test_set, DataLoader)
+    """
+    rng = np.random.RandomState(seed) if seed is not None else np.random
+
+    normalize = trns.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+    trans = trns.Compose([trns.ToTensor(), normalize])
+
+    if corruption == 'original':
+        test_set = CIFAR100(DATA_PATHS['Cifar100'], train=False, transform=trans, download=True)
+    elif corruption in CIFAR10_CORRUPTIONS:
+        x_test, y_test = load_cifar100c(10000, level, DATA_PATHS['Cifar100'], True, [corruption])
+        test_set = LabeledDataset(x_test, y_test, transform=None)
+    else:
+        raise RuntimeError(f"Not supported corruption: {corruption}")
+
+    labels = np.array([label for _, label in test_set])
+    num_classes = np.max(labels) + 1
+    class_indices = [np.where(labels == y)[0] for y in range(num_classes)]
+
+    # Sample class proportions using Dirichlet distribution
+    proportions = rng.dirichlet([alpha] * num_classes)
+    total_samples = len(labels)
+    samples_per_class = (proportions * total_samples).astype(int)
+
+    # Fix rounding issues
+    while samples_per_class.sum() < total_samples:
+        samples_per_class[rng.randint(0, num_classes)] += 1
+    while samples_per_class.sum() > total_samples:
+        samples_per_class[rng.randint(0, num_classes)] -= 1
+
+    selected_indices = []
+    for c in range(num_classes):
+        rng.shuffle(class_indices[c])
+        selected_indices.extend(class_indices[c][:samples_per_class[c]])
+
+    rng.shuffle(selected_indices)
+    skewed_subset = Subset(test_set, selected_indices)
+
+    loader = DataLoader(skewed_subset, batch_size=batch_size, shuffle=False,
+                        num_workers=workers, pin_memory=True)
+    return skewed_subset, loader

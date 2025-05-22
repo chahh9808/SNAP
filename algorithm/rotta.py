@@ -19,7 +19,7 @@ class RoTTA(AdaptableModule):
     """Tent adapts a model by entropy minimization during testing.
     Once tented, a model adapts itself by updating on every forward.
     """
-    def __init__(self, model, optimizer, e_margin, maxage, c_margin, w_min, w_max, input_size, fishers=None, training_avg=None, training_var=None):
+    def __init__(self, model, optimizer, e_margin, maxage, c_margin, w_min, w_max, input_size, fishers=None, training_avg=None, training_var=None,layer_t=0):
         super().__init__()
         self.model_student = model # student model
         self.model = self.build_ema(self.model_student) # teacher ema
@@ -61,6 +61,8 @@ class RoTTA(AdaptableModule):
         self.norm_beta = 0.01
         self.wasserstein_means_test = None
         self.wasserstein_vars_test = None
+
+        self.layer_t = layer_t
 
     def forward(self, x, progress, isadapt, memtype, adst, rmst, mem_size, memreset, alginf=False):        
         # adaptation batch
@@ -109,9 +111,12 @@ class RoTTA(AdaptableModule):
             self.switch_bn(False,model=self.model)
             with torch.no_grad():
                 outputs = self.model(x)
+
+            if adst == 'basic':  
+                return outputs 
                 
             # collect wasserstein metric of samples and add/remove samples from memory
-            wdists_test, stats_list, mu, sigma2 = self.retrieve_bn_stats(outputs, isadapt)
+            wdists_test, stats_list, mu, sigma2 = self.retrieve_bn_stats(outputs, isadapt,self.layer_t)
             self.check_bn_divergence(memtype,mu, sigma2)
             sample_number = self.add_mem(x, memtype, adst, rmst, mem_size, isadapt, outputs, wdists_test, stats_list)
         
@@ -269,14 +274,14 @@ class RoTTA(AdaptableModule):
 
         return outputs
             
-    def iobmn_get_bn_stats(self, compare_with_test=False):
-        return bn_iobmn_get_bn_stats(self, compare_with_test)
+    def iobmn_get_bn_stats(self, compare_with_test=False,layer_t=0):
+        return bn_iobmn_get_bn_stats(self, compare_with_test,layer_t)
             
     def iobmn_get_bn_stats_N(self, N, compare_with_test=False):
         return bn_iobmn_get_bn_stats_N(self, N, compare_with_test)
             
-    def retrieve_bn_stats(self, outputs, isadapt):
-        return bn_retrieve_bn_stats(self, outputs, isadapt)
+    def retrieve_bn_stats(self, outputs, isadapt,layer_t=0):
+        return bn_retrieve_bn_stats(self, outputs, isadapt,layer_t)
 
     def retrieve_bn_stats_N(self, outputs, N, isadapt):
         return bn_retrieve_bn_stats_N(self, outputs, N, isadapt)
@@ -284,7 +289,7 @@ class RoTTA(AdaptableModule):
     def recalc_bn_stats(self, memtype,compare_with_test=False):
         return bn_recalc_bn_stats(self,memtype, compare_with_test)
 
-    def check_bn_divergence(self, memtype,mu, sigma2):
+    def check_bn_divergence(self,memtype, mu, sigma2):
         return bn_check_bn_divergence(self,memtype, mu, sigma2)
     
     # returns how many times memory wdist was recalculated

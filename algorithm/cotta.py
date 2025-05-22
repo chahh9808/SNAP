@@ -461,11 +461,10 @@ class CoTTA(nn.Module):
         params = []
         names = []
         for nm, m in model.named_modules():
-            if isinstance(m, nn.BatchNorm2d):
-                for np, p in m.named_parameters():
-                    if np in ['weight', 'bias'] and p.requires_grad:
-                        params.append(p)
-                        names.append(f"{nm}.{np}")
+            for np, p in m.named_parameters():
+                if np in ['weight', 'bias'] and p.requires_grad:
+                    params.append(p)
+                    names.append(f"{nm}.{np}")
         return params, names
 
     @staticmethod
@@ -484,6 +483,11 @@ class CoTTA(nn.Module):
                 m.momentum = 1
                 # m.running_mean = None
                 # m.running_var = None
+            elif isinstance(m, nn.LayerNorm):
+            # if filter is not None and not filter(nm):
+            #     continue
+            # Enable gradient computation for the LayerNorm module
+                m.requires_grad_(True)
             else:
                 m.requires_grad_(True)
         return model
@@ -527,171 +531,6 @@ class CoTTA(nn.Module):
     def check_bn_divergence(self, memtype,mu, sigma2):
         return bn_check_bn_divergence(self,memtype, mu, sigma2)
     
-    # gets first layer BN stats
-    # def iobmn_get_bn_stats(self, compare_with_test=False):
-    #     for module in self.model_ema.modules():
-    #         if isinstance(module, SparseAdaptationAwareBatchNorm2d) or isinstance(module, SparseAdaptationAwareLayerNorm):
-    #             if compare_with_test:
-    #                 return module.mu_batch, module.sigma2_batch, module.mu_prev, module.sigma2_prev
-    #             else:
-    #                 return module.mu_batch, module.sigma2_batch, module._bn.training_mean, module._bn.training_varå
-        
-    #     print("ERROR: SparseAdaptationAwareNorm not found")
-    #     return None, None, None, None
-    
-    # # gets first layer BN stats
-    # def iobmn_get_bn_stats_test(self, compare_with_test=False):
-    #     for module in self.model_ema.modules():
-    #         if isinstance(module, SparseAdaptationAwareBatchNorm2d) or isinstance(module, SparseAdaptationAwareLayerNorm):
-    #             if compare_with_test:
-    #                 return module.mu_batch, module.sigma2_batch, module.mu_prev, module.sigma2_prev, module.mu_test, module.sigma2_test
-    #             else:
-    #                 return module.mu_batch, module.sigma2_batch, module._bn.training_mean, module._bn.training_var, module.mu_cur, module.sigma2_cur
-        
-    #     print("ERROR: SparseAdaptationAwareNorm not found")
-    #     return None, None, None, None, None, None
-    
-    # def iobmn_update_prev(self):
-    #     for module in self.model_ema.modules():
-    #         if isinstance(module, SparseAdaptationAwareBatchNorm2d) or isinstance(module, SparseAdaptationAwareLayerNorm):
-    #             module.update_prev()
-    #             return None
-    
-    # # returns first N BN layer stats
-    # def iobmn_get_bn_stats_N(self, N, compare_with_test=False):
-    #     # N=None means iterate through all BN layers
-    #     stats = []
-    #     count = 0
-    #     for module in self.model.modules():
-    #         if isinstance(module, SparseAdaptationAwareBatchNorm2d) or isinstance(module, SparseAdaptationAwareLayerNorm):
-    #             if compare_with_test:
-    #                 stats.append((module.mu_batch, module.sigma2_batch, module.mu_test, module.sigma2_test))
-    #             else:
-    #                 stats.append((module.mu_batch, module.sigma2_batch, module._bn.training_mean, module._bn.training_var))
-    #             count += 1
-    #             if N is not None and count == N:
-    #                 break
-        
-    #     if N is not None and len(stats) != N:
-    #         print(f"ERROR: fewer than {N} SparseAdaptationAwareBatchNorm2d were found")
-    #         return None
-        
-    #     return stats
-    # # calculate WDIST using first layer BN stats and return list of WDIST for each image
-    # def retrieve_bn_stats(self, outputs, compare_with_test=False):
-    #     mu_batch, sigma2_batch, mu, sigma2 = self.iobmn_get_bn_stats(compare_with_test)
-    #     entropies = softmax_entropy(outputs)
-
-    #     if not compare_with_test:
-    #         mu = torch.tensor(mu).to('cuda')
-    #         sigma2 = torch.tensor(sigma2).to('cuda')
-            
-    #     stats_list = []
-    
-    #     # wasserstein distance
-    #     wasserstein_distances = []
-
-    #     # iterate over each image
-    #     for i in range(outputs.size(0)):
-    #         # wasserstein distance
-    #         w_dist = wasserstein_distance(mu_batch[i], sigma2_batch[i], mu, sigma2)
-
-    #         # store entropy and distances as a tuple, and append to global list
-    #         per_image_stat = (entropies[i].item(), w_dist)
-    #         self.bn_analysis.append(per_image_stat)
-
-    #         wasserstein_distances.append(w_dist)
-            
-    #         stats_list.append([mu_batch[i],sigma2_batch[i]])
-
-    #     return wasserstein_distances, stats_list, mu, sigma2
-    
-    # def recalc_bn_stats(self, memtype, compare_with_test=False):
-    #     _, _, mu, sigma2 = self.iobmn_get_bn_stats(compare_with_test)
-    #     tot_idx = 0
-    #     if self.memory is not None:
-    #         if memtype == 'pb':
-    #             for data_per_cls in self.memory.data:
-    #                 for idx in range(len(data_per_cls[3])):
-    #                     # print(data_per_cls[4][idx])
-    #                     # print(data_per_cls[5][idx])
-    #                     w_dist = wasserstein_distance(data_per_cls[5][idx][0], data_per_cls[5][idx][1], mu, sigma2)
-    #                     data_per_cls[4][idx] = w_dist
-    #                     tot_idx=tot_idx+1
-    #                     # print(data_per_cls[4][idx])
-    #                     # print('-----------------------')
-    #         else:
-    #             for idx in range(len(self.memory.data[3])):
-    #                 w_dist = wasserstein_distance(self.memory.data[5][idx][0], self.memory.data[5][idx][1], mu, sigma2)
-    #                 self.memory.data[4][idx] = w_dist
-    #                 tot_idx=tot_idx+1
-    #         # print(tot_idx)
-    #         # assert(0)
-    #     self.cnt = self.cnt+1
-    #     return tot_idx
-
-    # # calculate WDIST using first N layer BN stats, normalize each layer WDIST using running average of WDIST stats so that each layer gets fair weight,
-    # # then sums all layers to get one WDIST per image
-    # # return list of WDIST for each image
-    # def retrieve_bn_stats_N(self, outputs, N, compare_with_test=False):
-    #     stats = self.iobmn_get_bn_stats_N(N, compare_with_test)
-    #     entropies = softmax_entropy(outputs)
-
-    #     wasserstein_distances = [[] for _ in range(N)]
-
-    #     # iterate over each image
-    #     for i in range(outputs.size(0)):
-    #         # iterate over each BN layer
-    #         for layer_idx, stat in enumerate(stats):
-    #             mu_batch, sigma2_batch, mu, sigma2 = stat
-
-    #             if not compare_with_test:
-    #                 mu = torch.tensor(mu).to('cuda')
-    #                 sigma2 = torch.tensor(sigma2).to('cuda')
-
-    #             # wasserstein distance per layer
-    #             w_dist = wasserstein_distance(mu, sigma2, mu_batch[i], sigma2_batch[i])
-    #             wasserstein_distances[layer_idx].append(w_dist)
-
-    #     wasserstein_means = [torch.mean(torch.tensor(distances)) for distances in wasserstein_distances] # mean of WDIST for each layer 
-    #     wasserstein_vars = [torch.var(torch.tensor(distances)) for distances in wasserstein_distances] # variance of WDIST for each layer
-
-    #     # update running estimate of wasserstein_means and wasserstein_vars
-    #     if self.wasserstein_means is None and self.wasserstein_vars is None:
-    #         self.wasserstein_means = wasserstein_means
-    #         self.wasserstein_vars = wasserstein_vars
-    #     else:
-    #         # use momentum update
-    #         self.wasserstein_means = [self.norm_beta * batch_mean + (1 - self.norm_beta) * running_mean for batch_mean, running_mean in zip(wasserstein_means, self.wasserstein_means)]
-    #         self.wasserstein_vars = [self.norm_beta * batch_var + (1 - self.norm_beta) * running_var for batch_var, running_var in zip(wasserstein_vars, self.wasserstein_vars)]
-
-    #     normalized_wasserstein_distances = []
-
-    #     # normalize the per layer WDISTs and sum them to get per image WDIST
-    #     for i in range(outputs.size(0)):
-    #         w_dist_sum = 0
-            
-    #         for layer_idx in range(N):
-    #             w_dist = wasserstein_distances[layer_idx][i]
-
-    #             mean = self.wasserstein_means[layer_idx]
-    #             var = self.wasserstein_vars[layer_idx]
-    #             w_dist_normalized = torch.abs((w_dist - mean) / torch.sqrt(var + 1e-8))
-                
-    #             w_dist_sum += w_dist_normalized.item()
-
-    #         # store entropy and WDIST as a tuple, and append to global list
-    #         per_image_stat = (entropies[i].item(), w_dist_sum)
-    #         self.bn_analysis.append(per_image_stat)
-
-    #         # append stats to list to be returned
-    #         normalized_wasserstein_distances.append(w_dist_sum)
-
-    #     return normalized_wasserstein_distances
-
-    
-
-
 class CoTTA_ImageNet(nn.Module):
     """CoTTA adapts a model by entropy minimization during testing.
 
@@ -1050,12 +889,10 @@ class CoTTA_ImageNet(nn.Module):
         params = []
         names = []
         for nm, m in model.named_modules():
-            if isinstance(m, nn.BatchNorm2d):
-                for np, p in m.named_parameters():
-                    if np in ['weight', 'bias'] and p.requires_grad:
-                        params.append(p)
-                        names.append(f"{nm}.{np}")
-                        # print(nm, np)
+            for np, p in m.named_parameters():
+                if np in ['weight', 'bias'] and p.requires_grad:
+                    params.append(p)
+                    names.append(f"{nm}.{np}")
         return params, names
 
     @staticmethod
@@ -1074,6 +911,11 @@ class CoTTA_ImageNet(nn.Module):
                 m.momentum = 1
                 # m.running_mean = None
                 # m.running_var = None
+            elif isinstance(m, nn.LayerNorm):
+                # if filter is not None and not filter(nm):
+                #     continue
+                # Enable gradient computation for the LayerNorm module
+                m.requires_grad_(True)
             else:
                 m.requires_grad_(True)
         return model

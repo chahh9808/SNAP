@@ -112,6 +112,9 @@ class SAR(AdaptableModule):
             with torch.no_grad():
                 outputs = self.model(x)
 
+            if adst == 'basic':  
+                return outputs  
+
             wdists_test, stats_list, mu, sigma2 = self.retrieve_bn_stats(outputs, isadapt,self.layer_t)
             self.check_bn_divergence(memtype,mu, sigma2)
             self.add_mem(x, memtype, adst, rmst, mem_size, isadapt, outputs, wdists_test, stats_list)
