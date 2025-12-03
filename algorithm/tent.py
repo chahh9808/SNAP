@@ -2,7 +2,6 @@
 Copyright to Tent Authors ICLR 2021 Spotlight
 """
 
-from argparse import ArgumentDefaultsHelpFormatter
 from copy import deepcopy
 
 import torch
@@ -14,12 +13,10 @@ from models.batch_norm import has_accum_bn_grad
 from .base import AdaptableModule, collect_bn_params, configure_model
 from utils.cpu_mem_track import MemTracker
 # from utils.gpu_mem_track import MemTracker
-from utils.latency_track import TimeTracker
 
 from utils.memory import NMemory, PBMemory
 from utils.bn_utils import bn_iobmn_get_bn_stats, bn_iobmn_get_bn_stats_N, bn_retrieve_bn_stats, bn_retrieve_bn_stats_N, bn_recalc_bn_stats, bn_check_bn_divergence
 from torch.utils.data import TensorDataset, DataLoader
-from utils.iobmn import SparseAdaptationAwareBatchNorm2d, SparseAdaptationAwareLayerNorm
 
 
 

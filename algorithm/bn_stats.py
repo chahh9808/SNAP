@@ -2,21 +2,16 @@
 Copyright to Tent Authors ICLR 2021 Spotlight
 """
 
-from argparse import ArgumentDefaultsHelpFormatter
 from copy import deepcopy
 
 import torch
 import torch.nn as nn
 import torch.jit
-from collections import defaultdict
 
 from models.batch_norm import has_accum_bn_grad
 from .base import AdaptableModule, collect_bn_params, configure_model
-from utils.cpu_mem_track import MemTracker
 # from utils.gpu_mem_track import MemTracker
-from utils.latency_track import TimeTracker
 
-import math
 from utils.memory import NMemory, PBMemory
 import matplotlib.pyplot as plt
 
@@ -187,10 +182,10 @@ class BNSTATS(AdaptableModule):
             mem_dataset = TensorDataset(mem)
             mem_loader = DataLoader(mem_dataset, batch_size=self.memory.get_occupancy(), shuffle=True)
             for mem_batch in mem_loader:
-                mem_batch = mem_batch[0]  # TensorDataset으로부터 얻은 배치는 튜플 형태이므로, 실제 데이터를 추출합니다.
+                mem_batch = mem_batch[0]  # Extract the tensor because TensorDataset returns tuples
                 outputs_withmem = model(mem_batch)
                 outputs_withmem_list.append(outputs_withmem)
-            # 리스트에 있는 모든 결과를 하나의 텐서로 결합
+            # Concatenate all collected results into a single tensor
             outputs_withmem = torch.cat(outputs_withmem_list, dim=0)
             # outputs_withmem = model(mem)
             # print(outputs_withmem.shape)
@@ -204,7 +199,7 @@ class BNSTATS(AdaptableModule):
         
         # for group in optimizer.param_groups:
         #     for param in group['params']:
-        #         # 모델의 파라미터를 순회하며 optimizer에 포함된 파라미터의 이름 찾기
+        #         # Iterate model parameters and locate those tracked by the optimizer
         #         for name, p in model.named_parameters():
         #             if p is param:
         #                 print(f"Updating parameter: {name}")

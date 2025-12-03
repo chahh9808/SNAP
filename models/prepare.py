@@ -1,11 +1,9 @@
-from enum import Enum
 import torch
 from torch import nn
 from robustbench.utils import load_model
 from robustbench.model_zoo.enums import ThreatModel, BenchmarkDataset
 import warnings
 
-from utils.utils import unwrap_module
 from utils.config import MODEL_PATHS
 
 from .batch_norm import MectaNorm2d

@@ -4,7 +4,6 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 #
-import torch
 import torch.nn as nn
 
 try:
@@ -12,8 +11,6 @@ try:
 except ImportError:
     from torch.utils.model_zoo import load_url as load_state_dict_from_url
 # from torch.utils.checkpoint import checkpoint_sequential
-from .checkpoint import checkpoint_sequential
-from functools import partial
 
 from torch.nn import BatchNorm2d
 # from models.batch_norm import SlowBatchNorm2d as BatchNorm2d

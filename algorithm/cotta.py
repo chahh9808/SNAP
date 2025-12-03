@@ -7,7 +7,6 @@ import torch
 import torch.nn as nn
 import torch.jit
 
-import PIL
 import torchvision.transforms as transforms
 from algorithm import cotta_transforms
 from utils.latency_track import TimeTracker
@@ -20,7 +19,6 @@ import matplotlib.pyplot as plt
 
 from torch.utils.data import TensorDataset, DataLoader
 
-from utils.iobmn import SparseAdaptationAwareBatchNorm2d, SparseAdaptationAwareLayerNorm
 from utils.bn_utils import bn_iobmn_get_bn_stats, bn_iobmn_get_bn_stats_N, bn_retrieve_bn_stats, bn_retrieve_bn_stats_N, bn_recalc_bn_stats, bn_check_bn_divergence
 
 N = 8
@@ -320,12 +318,12 @@ class CoTTA(nn.Module):
                 break
 
         if bn_layer is None:
-            print("모델에 BN 레이어가 없습니다.")
+            print("No BN layer found in the model.")
             return
 
-        print("첫 번째 BN 레이어의 통계:")
-        print("  배치 평균:", bn_layer.running_mean)
-        print("  배치 분산:", bn_layer.running_var)
+        print("First BN layer statistics:")
+        print("  Batch mean:", bn_layer.running_mean)
+        print("  Batch variance:", bn_layer.running_var)
         print("  gamma:", bn_layer.weight)
         print("  beta:", bn_layer.bias)
         
@@ -388,7 +386,7 @@ class CoTTA(nn.Module):
         if mem is not None and self.memory is not None:
             outputs_withmem_list = []
             outputs_ema_list = []
-            mem_dataset = TensorDataset(mem)  # mem이 torch.Tensor 타입이라고 가정합니다.
+            mem_dataset = TensorDataset(mem)  # Assumes mem is a torch.Tensor
             mem_loader = DataLoader(mem_dataset, batch_size=self.memory.get_occupancy(), shuffle=True)
             for mem_batch in mem_loader:
                 mem_batch = mem_batch[0] 
@@ -417,7 +415,7 @@ class CoTTA(nn.Module):
                 outputs_ema_list.append(outputs_ema)
         ############################################################
             outputs_ema = torch.cat(outputs_ema_list, dim=0)
-            # 리스트에 있는 모든 결과를 하나의 텐서로 결합
+            # Concatenate all collected results into a single tensor
             outputs = torch.cat(outputs_withmem_list, dim=0)
         else:
             assert('error on adapt without memory')
@@ -822,7 +820,7 @@ class CoTTA_ImageNet(nn.Module):
         if mem is not None and self.memory is not None:
             outputs_withmem_list = []
             outputs_ema_list = []
-            mem_dataset = TensorDataset(mem)  # mem이 torch.Tensor 타입이라고 가정합니다.
+            mem_dataset = TensorDataset(mem)  # Assumes mem is a torch.Tensor
             mem_loader = DataLoader(mem_dataset, batch_size=self.memory.get_occupancy(), shuffle=True)
             for mem_batch in mem_loader:
                 mem_batch = mem_batch[0] 
@@ -848,7 +846,7 @@ class CoTTA_ImageNet(nn.Module):
                 outputs_ema_list.append(outputs_ema)
             ############################################################
             outputs_ema = torch.cat(outputs_ema_list, dim=0)
-            # 리스트에 있는 모든 결과를 하나의 텐서로 결합
+            # Concatenate all collected results into a single tensor
             outputs = torch.cat(outputs_withmem_list, dim=0)
         else:
             assert('error on adapt without memory')

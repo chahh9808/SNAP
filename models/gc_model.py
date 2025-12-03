@@ -1,5 +1,4 @@
 """Transform models with gradient checkpoint."""
-import torch
 from torch import nn
 import warnings
 

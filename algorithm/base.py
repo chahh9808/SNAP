@@ -4,9 +4,7 @@ from collections import defaultdict
 
 from models.batch_norm import MectaNorm2d
 
-from utils.iobmn import convert_iobmn
 
-import numpy as np
 
 class AdaptableModule(nn.Module):
     """Module that can adapt model at test time."""
@@ -34,7 +32,7 @@ class AdaptableModule(nn.Module):
             elif isinstance(m, nn.LayerNorm):
                 # if filter is not None and not filter(nm):
                 #     continue
-                # LayerNorm은 `momentum`이나 `track_running_stats` 속성이 없으므로 requires_grad만 조정
+                # LayerNorm lacks momentum/track_running_stats, so only toggle requires_grad
                 m.requires_grad_(adapt)
                 
     def print_first_bn_layer_stats(self):
@@ -46,12 +44,12 @@ class AdaptableModule(nn.Module):
                 break
 
         if bn_layer is None:
-            print("모델에 BN 레이어가 없습니다.")
+            print("No BN layer found in the model.")
             return
 
-        print("첫 번째 BN 레이어의 통계:")
-        print("  배치 평균:", bn_layer.running_mean[0])
-        print("  배치 분산:", bn_layer.running_var[0])
+        print("First BN layer statistics:")
+        print("  Batch mean:", bn_layer.running_mean[0])
+        print("  Batch variance:", bn_layer.running_var[0])
         print("  gamma:", bn_layer.weight)
         print("  beta:", bn_layer.bias)
     
@@ -63,15 +61,15 @@ class AdaptableModule(nn.Module):
                 break
 
         if ln_layer is None:
-            print("모델에 LayerNorm 레이어가 없습니다.")
+            print("No LayerNorm layer found in the model.")
             return
 
-        print("첫 번째 LayerNorm 레이어의 통계:")
+        print("First LayerNorm layer statistics:")
         if ln_layer.elementwise_affine:
             print("  gamma (weight):", ln_layer.weight)
             print("  beta (bias):", ln_layer.bias)
         else:
-            print("  이 LayerNorm 레이어는 affine 파라미터를 사용하지 않습니다.")
+            print("  This LayerNorm layer does not use affine parameters.")
 
     @staticmethod
     def collect_params(model):

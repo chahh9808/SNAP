@@ -10,8 +10,8 @@ import torch
 
 import torch
 # import torch.nn as nn
-from torch.utils._pytree import tree_map, tree_flatten
-from typing import List, Any, Callable, Union, Optional
+from torch.utils._pytree import tree_map
+from typing import List, Any, Callable, Union
 import typing
 from numbers import Number
 from collections import defaultdict

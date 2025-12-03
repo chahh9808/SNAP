@@ -4,8 +4,6 @@ import shutil
 import numpy as np
 
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""

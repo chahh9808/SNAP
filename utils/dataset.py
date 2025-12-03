@@ -1,23 +1,17 @@
 import os
-import torch
 import numpy as np
-from torch.utils.data import DataLoader, Subset, TensorDataset, Dataset
+from torch.utils.data import DataLoader, Subset, Dataset
 from torchvision import transforms as trns
 from torchvision.datasets import ImageFolder
-from .robustbench_data import load_cifar10c, load_cifar100c, load_cifar10c_bybatch,load_cifar100c_bybatch, BenchmarkDataset, DownloadError
-from utils.config import DATA_PATHS, data_root
+from .robustbench_data import load_cifar10c, load_cifar100c, load_cifar10c_bybatch,load_cifar100c_bybatch, BenchmarkDataset
+from utils.config import DATA_PATHS
 from torchvision.datasets import CIFAR10, CIFAR100
 
-from .zenodo_download import DownloadError, zenodo_download
-from .robustbench_loaders import CustomImageFolder
 
-from utils.cli_utils import AverageMeter, ProgressMeter, accuracy
 from utils.config import DATA_PATHS
-from pathlib import Path
 
-from typing import Callable, Dict, Optional, Sequence, Set, Tuple
+from typing import Dict, Set, Tuple
 
-from collections import defaultdict
 
 
 IN_C_corruptions = ['gaussian_noise', 'shot_noise', 'impulse_noise', 'defocus_blur', 'glass_blur',

@@ -1,8 +1,4 @@
 import random
-import copy
-import torch
-import torch.nn.functional as F
-import numpy as np
 import math
 
 class FIFO():

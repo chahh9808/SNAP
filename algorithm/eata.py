@@ -2,8 +2,6 @@
 Copyright to EATA ICML 2022 Authors, 2022.03.20
 Based on Tent ICLR 2021 Spotlight. 
 """
-from collections import defaultdict
-from argparse import ArgumentDefaultsHelpFormatter
 from copy import deepcopy
 
 import torch
@@ -16,7 +14,6 @@ from models.batch_norm import has_accum_bn_grad, standard_bn_cxt
 from .base import AdaptableModule
 # from models.online_norm import OnlineNorm2d
 from .base import collect_bn_params, configure_model
-from utils.latency_track import TimeTracker
 from utils.cpu_mem_track import MemTracker
 from torch.utils.data import TensorDataset, DataLoader
 
@@ -235,7 +232,7 @@ class EATA(AdaptableModule):
         if mem is not None and self.memory is not None:
             outputs_withmem_list = []
             outputs_ema_list = []
-            mem_dataset = TensorDataset(mem)  # mem이 torch.Tensor 타입이라고 가정합니다.
+            mem_dataset = TensorDataset(mem)  # Assumes mem is a torch.Tensor
             mem_loader = DataLoader(mem_dataset, batch_size=self.memory.get_occupancy(), shuffle=True)
             for mem_batch in mem_loader:
                 mem_batch = mem_batch[0] 

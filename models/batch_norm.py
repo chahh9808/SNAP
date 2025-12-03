@@ -1,12 +1,10 @@
 """MECTA batch-norm"""
 import torch
-from torch import nn, Tensor
+from torch import nn
 from torch.nn import BatchNorm2d
-from typing import Optional, Any
 
-from torch.utils.checkpoint import check_backward_validity, get_device_states, set_device_states, detach_variable, checkpoint
+from torch.utils.checkpoint import check_backward_validity, get_device_states, set_device_states
 import numpy as np
-from copy import deepcopy
 import torch
 from torch import nn
 from torch.nn.modules.batchnorm import BatchNorm2d

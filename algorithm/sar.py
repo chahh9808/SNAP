@@ -8,11 +8,10 @@ from copy import deepcopy
 import torch
 import torch.nn as nn
 import torch.jit
-import math
 import numpy as np
 
 from models.batch_norm import has_accum_bn_grad
-from .base import AdaptableModule, collect_bn_params, configure_model
+from .base import AdaptableModule, configure_model
 from utils.memory import NMemory, PBMemory
 
 from utils.bn_utils import bn_iobmn_get_bn_stats, bn_iobmn_get_bn_stats_N, bn_retrieve_bn_stats, bn_retrieve_bn_stats_N, bn_recalc_bn_stats, bn_check_bn_divergence

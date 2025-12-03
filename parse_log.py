@@ -1,6 +1,5 @@
 import os
 import re
-import numpy as np
 import pandas as pd
 from collections import defaultdict
 from datetime import datetime
@@ -34,7 +33,7 @@ def process_log_folders(parent_folder):
         )
         log_content_pattern = re.compile(r'\[0\] \w+@[\w_]+ Acc: (\d+\.\d+)%\s*')
 
-        # 파일 처리 함수
+        # Helper to parse each log file
         def process_file(filepath):
             filename = os.path.basename(filepath)
             match = filename_pattern.search(filename)

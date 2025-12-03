@@ -3,7 +3,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import copy
-from models.batch_norm import MectaNorm2d
 
 def convert_iobmn(module, iobmn_k=4, iobmn_s=1, use_tb=False,use_mtb=False, **kwargs):
     for name, child in module.named_children():
@@ -98,9 +97,6 @@ class SparseAdaptationAwareBatchNorm2d(nn.Module):
                 mu_adj = torch.where(mu_b < mu, torch.max(mu_adj, mu_b), torch.min(mu_adj, mu_b))          
                 sigma2_adj = torch.where(sigma2_b < sigma2, torch.max(sigma2_adj, sigma2_b), torch.min(sigma2_adj, sigma2_b))
                 sigma2_adj = F.relu(sigma2_adj) #non negative
-
-                mu_adj = mu
-                sigma2_adj = sigma2
         
                 x_n = (x - mu_adj) * torch.rsqrt(sigma2_adj + self.eps)
                 

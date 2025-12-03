@@ -2,7 +2,7 @@
 Modified from https://github.com/RobustBench/robustbench/blob/ecc9f33dc5ce8f4febc24c844d959319885d4198/robustbench/data.py
 LICENSE: MIT license. Refer to https://github.com/RobustBench/robustbench/blob/ecc9f33dc5ce8f4febc24c844d959319885d4198/LICENSE
 """
-from typing import Callable, Union
+from typing import Callable
 import os
 from pathlib import Path
 from typing import Callable, Dict, Optional, Sequence, Set, Tuple
@@ -20,8 +20,6 @@ from torch.utils.data import Dataset
 from .zenodo_download import DownloadError, zenodo_download
 from .robustbench_loaders import CustomImageFolder
 
-from utils.cli_utils import AverageMeter, ProgressMeter, accuracy
-from utils.config import DATA_PATHS
 from utils.datahelper import DataHelper
 
 

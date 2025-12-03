@@ -2,7 +2,6 @@
 Note the implementation does not really reduce memory and may include more memory consumption than calculated cache sizes.
 """
 import numpy as np
-from copy import deepcopy
 import torch
 from torch import nn
 from torch.nn.modules.batchnorm import BatchNorm2d

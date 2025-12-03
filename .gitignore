@@ -179,3 +179,5 @@ logs/
 graph/
 # data/
 *.csv
+
+.github/

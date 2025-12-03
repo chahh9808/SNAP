@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 from torch.utils.checkpoint import checkpoint
-from models.batch_norm import get_bn_cache_size, MectaNorm2d
+from models.batch_norm import get_bn_cache_size
 from utils.utils import dtype_memory_size_dict
 
 

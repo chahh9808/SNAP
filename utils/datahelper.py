@@ -1,22 +1,15 @@
 import os
-import torch
 import numpy as np
-from torch.utils.data import DataLoader, Subset, TensorDataset, Dataset
-from torchvision import transforms as trns
-from torchvision.datasets import ImageFolder
-from utils.config import DATA_PATHS, data_root
-from torchvision.datasets import CIFAR10, CIFAR100
+from utils.config import DATA_PATHS
 from enum import Enum
 
 from .zenodo_download import zenodo_download
-from .robustbench_loaders import CustomImageFolder
 import torchvision.transforms as transforms
 
-from utils.cli_utils import AverageMeter, ProgressMeter, accuracy
 from utils.config import DATA_PATHS
 from pathlib import Path
 
-from typing import Callable, Dict, Optional, Sequence, Set, Tuple
+from typing import Dict, Sequence, Set, Tuple
 
 class BenchmarkDataset(Enum):
     cifar_10 = 'cifar10'

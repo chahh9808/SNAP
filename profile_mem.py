@@ -2,21 +2,18 @@
 import argparse
 import math
 
-import numpy as np
 import torch
 import torch.nn as nn
 # import wandb
 
-from algorithm.base import AdaptableModule
 from models.prepare import prepare_model
-from utils.dataset import prepare_imagenet_test_data, prepare_cifar10_test_data,prepare_cifar10_test_data_bybatch, prepare_cifar100_test_data
+from utils.dataset import prepare_imagenet_test_data, prepare_cifar10_test_data,prepare_cifar100_test_data
 from utils.utils import set_seed, str2bool
-from models.batch_norm import get_last_beta, get_bn_cache_size
+from models.batch_norm import get_bn_cache_size
 from utils.gpu_mem_track import MemTracker
 # from utils.cpu_mem_track import MemTracker
 
-from torch.profiler import profile, record_function, ProfilerActivity
-from torch.autograd import ProfilerActivity
+from torch.profiler import record_function
 
 from utils.count_op import FlopCounterMode
 from models.gc_model import get_gc_cache_size

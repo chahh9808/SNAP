@@ -1,20 +1,11 @@
 """Utils for evaluation"""
-import sys
 import time
 import torch
 # import wandb
-import numpy as np
-from tqdm import tqdm
-from algorithm.base import AdaptableModule
 from utils.cli_utils import AverageMeter, ProgressMeter, accuracy
-from typing import List
-from models.batch_norm import get_last_beta, get_bn_cache_size
-from utils.datahelper import DataHelper
 from utils.latency_track import TimeTracker
 
-import torch.nn.functional as F
 
-from utils.plot import plot_label_flip, plot_avg_accuracy, plot_wass_correct, plot_conf_correct
 
 @torch.jit.script
 def softmax_entropy(x: torch.Tensor) -> torch.Tensor:

@@ -1,7 +1,6 @@
 import argparse
 import math
 
-import numpy as np
 import torch
 import torch.nn as nn
 # import wandb
@@ -12,12 +11,7 @@ from utils.utils import set_seed, str2bool
 from utils.eval import validate, validate_bybatch
 from utils.config import set_torch_hub
 
-from utils.cli_utils import AverageMeter, ProgressMeter, accuracy
-import matplotlib.pyplot as plt
 from utils.datahelper import DataHelper
-from algorithm.base import AdaptableModule
-import os
-from datetime import datetime
 
 def get_args():
     parser = argparse.ArgumentParser(description='STTA Evaluation')

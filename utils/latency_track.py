@@ -1,10 +1,5 @@
-import gc
-import datetime
-import inspect
 import sys
 import time
-import torch
-import numpy as np
 
 sys.stdout.close = lambda: None
 

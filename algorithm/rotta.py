@@ -1,14 +1,10 @@
 import torch
-import torch.nn as nn
 import torch.jit
-import numpy as np
 
 from copy import deepcopy
 from models.batch_norm import has_accum_bn_grad
 from .base import AdaptableModule, collect_bn_params, configure_model
-from utils.cpu_mem_track import MemTracker
 # from utils.gpu_mem_track import MemTracker
-from utils.latency_track import TimeTracker
 
 from utils.memory import NMemory, PBMemory
 from utils.custom_transforms import get_tta_transforms
