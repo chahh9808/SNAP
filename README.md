@@ -2,10 +2,10 @@
 
 ![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg) ![PyTorch 2.1](https://img.shields.io/badge/pytorch-2.1-orange.svg) ![NeurIPS 2025](https://img.shields.io/badge/NeurIPS-2025-green.svg) ![Status: Research](https://img.shields.io/badge/status-research-purple.svg)
 
-This is the **official repository** for the NeurIPS 2025 paper *SNAP: Low-Latency Test-Time Adaptation with Sparse Updates* (Poster #119633, San Diego, Dec 3, 2025). See the conference listing [here](https://neurips.cc/virtual/2025/loc/san-diego/poster/119633), the companion project page at [nmsl.kaist.ac.kr/projects/snap](https://nmsl.kaist.ac.kr/projects/snap/), and the arXiv [2511.15276](https://arxiv.org/abs/2511.15276). This repository hosts the reference implementation used for the paper experiments, including evaluation, logging, and profiling utilities for CIFAR-10/100-C, ImageNet-C, and non-i.i.d. streaming variants.
+This is the **official repository** for the NeurIPS 2025 paper *SNAP: Low-Latency Test-Time Adaptation with Sparse Updates* (Poster #119633, San Diego, Dec 3, 2025). See the conference [virtual poster](https://neurips.cc/virtual/2025/loc/san-diego/poster/119633), the companion [project page](https://nmsl.kaist.ac.kr/projects/snap/), and the [arXiv](https://arxiv.org/abs/2511.15276). This repository hosts the reference implementation used for the paper experiments, including evaluation, logging, and profiling utilities for CIFAR-10/100-C, ImageNet-C, and non-i.i.d. streaming variants.
 
 ## Contributions of SNAP
-- Introduces **Class & Domain Representative Memory (CnDRM)** to subsample only the most informative test samples, enabling sparse adaptation (down to 1% of the stream) without accuracy loss.
+- Introduces **Class & Domain Representative Memory (CnDRM)** to subsample only the most informative test samples, enabling sparse adaptation (down to 1% of the stream) with negligible accuracy degradation.
 - Proposes **Inference-only Batch-aware Memory Normalization (IoBMN)** that updates normalization statistics using CnDRM, stabilizing TTA across architectures.
 - Demonstrates up to **93% latency reduction** while keeping accuracy within 3.3% of dense adaptation, validated across five SOTA TTA algorithms and three corruption benchmarks.
 
@@ -38,11 +38,11 @@ pip install -r requirements.txt # optional: lightweight pip flow (Python>=3.9)
 ### 3. Configure Paths
 `utils/config.py` autogenerates `./data`, `./checkpoint`, and Torch Hub caches. Edit `data_root` (and optionally `CHECKPOINT_ROOT`) to match your storage layout. The helper ensures directories exist when you run the scripts.
 
-### 4. Run an Experiment
+### 4. Run an Experiment (Quick Example)
 Compare naive sparse TTA (Tent) with SNAP-enhanced Tent on CIFAR-10-C corruption stream:
 
 ```bash
-# naive STTA with Tent
+# naive Sparse TTA with Tent
 python3 cta_eval.py --data=cifar10 --alg=tent --model=resnet18 --batch_size=16 --lr=1e-4 --device=cuda --workers=2 --test_corrupt=0 --eval_mode=continual --adaptrate=0.1 --mem_size=16 --alginf --adst=basic
 # SNAP with Tent
 python3 cta_eval.py --data=cifar10 --alg=tent --model=resnet18 --batch_size=16 --lr=1e-4 --device=cuda --workers=2 --test_corrupt=0 --eval_mode=continual --adaptrate=0.1 --mem_size=16 --alginf --adst=high_conf --rmst=WASS_OPP --memtype=pb --iobmn_k=1 --iobmn_s=1 --iobmn
@@ -98,15 +98,15 @@ The following environment was used for testing and evaluation reported on the pa
 - **GPU Driver Version**: 550.144.03
 - **CUDA Version**: 12.4 (nvcc 12.4.131)
 - **GCC Version**: 12.3.0
-- **CPU Device**: Raspberry Pi 4
+- **Edge Device**: Raspberry Pi 4, Raspberry Zero 2 W, NVIDIA Jetson Nano
 
 You may experience compatibility issues with different driver/CUDA versions. Please ensure consistency with this tested setup where possible.
 
 ## Acknowledgments
-Parts of this implementation are inspired by the MECTA codebase: https://github.com/SonyResearch/MECTA
+Parts of this implementation are inspired by the [MECTA codebase](https://github.com/SonyResearch/MECTA).
 
 ## Getting Help
 - Search existing issues or open a new one in this repository with details about your dataset, command, and environment (`python --version`, `torch --version`).
 - Attach log snippets from `cta_eval.py` or CSV summaries generated via `parse_log.py` when reporting discrepancies.
 - For dataset or checkpoint download problems, consult the helper docstrings inside `utils/dataset.py` and `utils/robustbench_data.py`.
-- Direct questions to Hyeongheon Cha via `hyeongheon@kaist.ac.kr`.
+- For any questions, please reach out to Hyeongheon Cha via `hyeongheon@kaist.ac.kr`.
