@@ -3,7 +3,6 @@ import math
 
 import torch
 import torch.nn as nn
-# import wandb
 
 from models.prepare import prepare_model
 from utils.dataset import prepare_imagenet_test_data, prepare_cifar10_test_data, prepare_cifar100_test_data, prepare_cifar10_test_data_bybatch,prepare_cifar100_test_data_bybatch, prepare_imagenet_test_data_bybatch,prepare_cifar10_test_data_dirichlet_skew, prepare_cifar100_test_data_dirichlet_skew, prepare_imagenet_test_data_dirichlet_skew
@@ -30,7 +29,7 @@ def get_args():
     
     # ONDEVTTA related parmeters
     parser.add_argument('--adaptrate', default=1, type=float, help='Adaptation Rate. The rest will be SKIPPED (Only Forward)')
-    parser.add_argument('--adst', default='basic', choices=['basic', 'all', 'high_conf', 'low_entr', 'wdist_custom'],
+    parser.add_argument('--adst', default='basic', choices=['basic', 'all', 'high_conf', 'low_entr'],
                         type=str, help='memory add strategy')
     parser.add_argument('--rmst', default='RAND', choices=['RAND', 'FIFO','RS', 'CONF', 'ENTR', 'WASS', 'WASS_OPP'],
                         type=str, help='memory remove strategy')
@@ -98,7 +97,6 @@ def get_args():
     parser.add_argument('--layer_grad_chkpt_segment', type=int, default=1, help='Num of segments per ResNet stage for gradient checkpointing.')
     parser.add_argument('--layer_t', type=int, default=0, help='Target layer number to calculate Doamin Centroid.')
 
-    
     args = parser.parse_args()
 
 
@@ -198,7 +196,7 @@ def main(args):
         params, param_names = Tent.collect_params(subnet)
         optimizer = torch.optim.SGD([{'params': params['affine']}], lr=args.lr,
                                     momentum=args.momentum)
-        adapt_model = Tent(subnet, optimizer, args.e_margin, args.maxage, args.c_margin, args.w_min, args.w_max,layer_t=args.layer_t)
+        adapt_model = Tent(subnet, optimizer, args.e_margin, args.maxage, args.c_margin, layer_t=args.layer_t)
     elif args.alg == 'eata':
         from algorithm.eata import EATA, compute_fishers
         subnet = EATA.configure_model(subnet)
@@ -256,7 +254,7 @@ def main(args):
         elif args.data == 'IN':
             input_size = 224
 
-        adapt_model = RoTTA(subnet, optimizer, args.e_margin, args.maxage, args.c_margin, args.w_min, args.w_max, input_size)
+        adapt_model = RoTTA(subnet, optimizer, args.e_margin, args.maxage, args.c_margin, input_size)
 
     else:
         raise NotImplementedError(f'alg: {args.alg}')

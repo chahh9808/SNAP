@@ -165,6 +165,11 @@ wandb/
 # npy data files
 *.npy
 
+# downloaded datasets (only robustbench_models are tracked)
+data/cifar10/
+data/cifar100/
+data/imagenet/
+
 # tar files
 *.tar
 *.tar.gz

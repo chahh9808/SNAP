@@ -2,7 +2,7 @@
 
 ![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg) ![PyTorch 2.1](https://img.shields.io/badge/pytorch-2.1-orange.svg) ![NeurIPS 2025](https://img.shields.io/badge/NeurIPS-2025-green.svg) ![Status: Research](https://img.shields.io/badge/status-research-purple.svg)
 
-This is the **official repository** for the NeurIPS 2025 paper *SNAP: Low-Latency Test-Time Adaptation with Sparse Updates* (Poster #119633, San Diego, Dec 3, 2025). See the conference [virtual poster](https://neurips.cc/virtual/2025/loc/san-diego/poster/119633), the companion [project page](https://nmsl.kaist.ac.kr/projects/snap/), and the [arXiv](https://arxiv.org/abs/2511.15276). This repository hosts the reference implementation used for the paper experiments, including evaluation, logging, and profiling utilities for CIFAR-10/100-C, ImageNet-C, and non-i.i.d. streaming variants.
+This is the **official repository** for the NeurIPS 2025 paper *SNAP: Low-Latency Test-Time Adaptation with Sparse Updates*. See the [project page](https://miil.kaist.ac.kr/projects/snap/) and [arXiv](https://arxiv.org/abs/2511.15276). This repository hosts the reference implementation used for the paper experiments, including evaluation, logging, and profiling utilities for CIFAR-10/100-C, ImageNet-C, and non-i.i.d. streaming variants.
 
 ## Contributions of SNAP
 - Introduces **Class & Domain Representative Memory (CnDRM)** to subsample only the most informative test samples, enabling sparse adaptation (down to 1% of the stream) with negligible accuracy degradation.
@@ -53,7 +53,7 @@ python3 cta_eval.py --data=cifar10 --alg=tent --model=resnet18 --batch_size=16 -
 - Corruptions can be enumerated (`--test_corrupt=0,1,2`) or use presets: `std`, `long`, `org`.
 
 ### 5. Batch Sweeps & Logs
-- Reproduce the paper’s adaptation-rate sweeps with scripts under `test_scripts/<alg>/run_*.sh` (e.g., [`test_scripts/tent/run_tent.sh`](test_scripts/tent/run_tent.sh)). These scripts loop over datasets, corruption severities, and adaptation rates, saving logs per seed.
+- Reproduce the paper's adaptation-rate sweeps with scripts under `test_scripts/<alg>/run_*.sh` (e.g., [`test_scripts/tent/run_tent.sh`](test_scripts/tent/run_tent.sh)). These scripts loop over datasets, corruption severities, and adaptation rates, saving logs per seed.
 - Summarize results via [`parse_log.py`](parse_log.py). Update `parent_txtlog_folder` to your log directory, then run `python3 parse_log.py` to emit `logs/results_all_<timestamp>.csv`.
 
 ## CLI Highlights
@@ -74,11 +74,10 @@ Refer to inline help (`python3 cta_eval.py --help`) for the full option list cov
 - [`utils/robustbench_loaders.py`](utils/robustbench_loaders.py) and `utils/zenodo_download.py` streamline dataset downloads and integrity checks.
 
 ## Publication & Citation
-- **Conference**: Advances in Neural Information Processing Systems (NeurIPS) 2025, Poster Session (ID 119633), San Diego location.
+- **Conference**: Advances in Neural Information Processing Systems (NeurIPS) 2025.
 - **Authors**: Hyeongheon Cha, Dong Min Kim, Hye Won Chung, Taesik Gong, Sung-Ju Lee.
-- **Listing**: https://neurips.cc/virtual/2025/loc/san-diego/poster/119633
 - **arXiv**: https://arxiv.org/abs/2511.15276
-- **Project Page**: https://nmsl.kaist.ac.kr/projects/snap/
+- **Project Page**: https://miil.kaist.ac.kr/projects/snap/
 
 Please consider citing our paper if SNAP helps your research:
 ```bibtex

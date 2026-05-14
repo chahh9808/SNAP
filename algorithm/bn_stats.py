@@ -271,15 +271,6 @@ def softmax_entropy(x: torch.Tensor) -> torch.Tensor:
 
 
 @torch.jit.script
-def energy(x: torch.Tensor) -> torch.Tensor:
-    """Energy calculation from logits."""
-    temprature = 1.
-    x = -(temprature*torch.logsumexp(x / temprature, dim=1))
-    # if torch.rand(1) > 0.95:
-    print('## energy ', x.mean(0).item())
-    return x
-
-@torch.jit.script
 def get_confidence(logits: torch.Tensor) -> torch.Tensor:
     """Get confidence from logits."""
     probabilities = logits.softmax(1)

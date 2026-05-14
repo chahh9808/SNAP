@@ -24,7 +24,7 @@ class Tent(AdaptableModule):
     """Tent adapts a model by entropy minimization during testing.
     Once tented, a model adapts itself by updating on every forward.
     """
-    def __init__(self, model, optimizer, e_margin, maxage, c_margin, w_min, w_max, fishers=None, training_avg=None, training_var=None, steps=1, episodic=False,layer_t=0):
+    def __init__(self, model, optimizer, e_margin, maxage, c_margin, fishers=None, training_avg=None, training_var=None, steps=1, episodic=False,layer_t=0):
         super().__init__()
         self.model = model
         self.optimizer = optimizer
@@ -58,10 +58,6 @@ class Tent(AdaptableModule):
         # update memory's wdist if diverged too far
         self.wass_dist = [] # wass dist btw prev bn stats
         self.cnt = 0 # count of how many times wdist was reupdated
-
-        # custom threshold for wdist
-        self.w_min = w_min
-        self.w_max = w_max
 
         # for wdist N layer normalization
         self.norm_beta = 0.01
@@ -184,15 +180,7 @@ class Tent(AdaptableModule):
                 for idx in hiconf_ids:
                     pseudo_cls = logits[idx].max(dim=0)[1]
                     self.memory.add_instance([x[idx], entropys[idx], confidences[idx], 0, bn_w_dist[idx], stats_list[idx], pseudo_cls],rmst)
-            elif adst == 'wdist_custom': # custom min/max threshold from input
-                w_min = self.w_min
-                w_max = self.w_max
-                ids = [i for i, dist in enumerate(bn_w_dist) if dist > w_min and dist < w_max]
-                sample_number = len(ids)
-                for idx in ids:
-                    pseudo_cls = logits[idx].max(dim=0)[1]
-                    self.memory.add_instance([x[idx], entropys[idx], confidences[idx], 0, bn_w_dist[idx], stats_list[idx], pseudo_cls], rmst)
-            
+
         if isadapt:
             self.mem = torch.stack(self.memory.get_memory())
             
@@ -315,15 +303,6 @@ def softmax_entropy(x: torch.Tensor) -> torch.Tensor:
     x = -(x.softmax(1) * x.log_softmax(1)).sum(1)
     return x
 
-
-@torch.jit.script
-def energy(x: torch.Tensor) -> torch.Tensor:
-    """Energy calculation from logits."""
-    temprature = 1.
-    x = -(temprature*torch.logsumexp(x / temprature, dim=1))
-    # if torch.rand(1) > 0.95:
-    print('## energy ', x.mean(0).item())
-    return x
 
 @torch.jit.script
 def get_confidence(logits: torch.Tensor) -> torch.Tensor:
