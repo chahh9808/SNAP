@@ -105,7 +105,7 @@ class CoTTA(nn.Module):
         self.sigma2_centr = None
         
         self.layer_t = layer_t
-        
+
         # for prelim experiment
         self.time = 0
         
@@ -249,20 +249,12 @@ class CoTTA(nn.Module):
                 for idx in lowentro_ids:
                     pseudo_cls = logits[idx].max(dim=0)[1]
                     self.memory.add_instance([x[idx], entropys[idx], confidences[idx],0, bn_w_dist[idx], stats_list[idx],pseudo_cls],rmst)
-            elif adst == 'wdist_custom': # custom min/max threshold from input
-                w_min = self.w_min
-                w_max = self.w_max
-                ids = [i for i, dist in enumerate(bn_w_dist) if dist > w_min and dist < w_max]
-                sample_number = len(ids)
-                for idx in ids:
-                    pseudo_cls = logits[idx].max(dim=0)[1]
-                    self.memory.add_instance([x[idx], entropys[idx], confidences[idx], 0, bn_w_dist[idx], stats_list[idx], pseudo_cls], rmst)
 
         if isadapt:
             self.mem = torch.stack(self.memory.get_memory())
-                
+
         return sample_number
-            
+
     def update_mem(self,logits):
         if self.mem is not None:
             self.memory.reset_memory()
@@ -295,20 +287,10 @@ class CoTTA(nn.Module):
     def switch_bn(self,adapt=True):
         for nm, m in self.model.named_modules():
             if isinstance(m, nn.BatchNorm2d):
-                # if filter is not None and not filter(nm):
-                #     continue
                 m.requires_grad_(adapt)
                 m.momentum = 1
                 m.track_running_stats = adapt # update moving bn stat
-    # def switch_bn(self,adapt=True,model=None):
-    #     for nm, m in model.named_modules():
-    #         if isinstance(m, nn.BatchNorm2d):
-    #             if filter is not None and not filter(nm):
-    #                 continue
-    #             m.requires_grad_(adapt)
-    #             m.momentum = 1
-    #             m.track_running_stats = adapt # update moving bn stat
-                
+
     def print_first_bn_layer_stats(self):
 
         bn_layer = None
@@ -703,23 +685,15 @@ class CoTTA_ImageNet(nn.Module):
                 for idx in lowentro_ids:
                     pseudo_cls = logits[idx].max(dim=0)[1]
                     self.memory.add_instance([x[idx], entropys[idx], confidences[idx],0, bn_w_dist[idx], stats_list[idx],pseudo_cls],rmst)
-            elif adst == 'wdist_custom': # custom min/max threshold from input
-                w_min = self.w_min
-                w_max = self.w_max
-                ids = [i for i, dist in enumerate(bn_w_dist) if dist > w_min and dist < w_max]
-                sample_number = len(ids)
-                for idx in ids:
-                    pseudo_cls = logits[idx].max(dim=0)[1]
-                    self.memory.add_instance([x[idx], entropys[idx], confidences[idx], 0, bn_w_dist[idx], stats_list[idx], pseudo_cls], rmst)
 
         if isadapt:
             self.mem = torch.stack(self.memory.get_memory())
-            
+
     def update_mem(self,logits):
         if self.mem is not None:
             self.memory.reset_memory()
             entropys = softmax_entropy(logits)
-            confidences = get_confidence(logits) 
+            confidences = get_confidence(logits)
             for i, x_ins in enumerate(self.mem):
                 logit = logits[i]
                 pseudo_cls = logit.max(dim=0)[1]

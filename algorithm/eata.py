@@ -12,7 +12,6 @@ import math
 import torch.nn.functional as F
 from models.batch_norm import has_accum_bn_grad, standard_bn_cxt
 from .base import AdaptableModule
-# from models.online_norm import OnlineNorm2d
 from .base import collect_bn_params, configure_model
 from utils.cpu_mem_track import MemTracker
 from torch.utils.data import TensorDataset, DataLoader
@@ -204,15 +203,7 @@ class EATA(AdaptableModule):
                 for idx in hiconf_ids:
                     pseudo_cls = logits[idx].max(dim=0)[1]
                     self.memory.add_instance([x[idx], entropys[idx], confidences[idx], 0, wdists_test[idx], stats_list[idx], pseudo_cls],rmst)
-            elif adst == 'wdist_custom': # custom min/max threshold from input
-                w_min = self.w_min
-                w_max = self.w_max
-                ids = [i for i, dist in enumerate(wdists_test) if dist > w_min and dist < w_max]
-                sample_number = len(ids)
-                for idx in ids:
-                    pseudo_cls = logits[idx].max(dim=0)[1]
-                    self.memory.add_instance([x[idx], entropys[idx], confidences[idx], 0, wdists_test[idx], stats_list[idx], pseudo_cls], rmst)
-    
+
         if isadapt:
             self.mem = torch.stack(self.memory.get_memory())
     

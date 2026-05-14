@@ -15,7 +15,7 @@ class RoTTA(AdaptableModule):
     """Tent adapts a model by entropy minimization during testing.
     Once tented, a model adapts itself by updating on every forward.
     """
-    def __init__(self, model, optimizer, e_margin, maxage, c_margin, w_min, w_max, input_size, fishers=None, training_avg=None, training_var=None,layer_t=0):
+    def __init__(self, model, optimizer, e_margin, maxage, c_margin, input_size, fishers=None, training_avg=None, training_var=None,layer_t=0):
         super().__init__()
         self.model_student = model # student model
         self.model = self.build_ema(self.model_student) # teacher ema
@@ -48,10 +48,6 @@ class RoTTA(AdaptableModule):
         # update memory's wdist if diverged too far
         self.wass_dist = [] # wass dist btw prev bn stats
         self.cnt = 0 # count of how many times wdist was reupdated
-
-        # custom threshold for wdist
-        self.w_min = w_min
-        self.w_max = w_max
 
         # for wdist N layer normalization
         self.norm_beta = 0.01
@@ -172,15 +168,7 @@ class RoTTA(AdaptableModule):
                 for idx in hiconf_ids:
                     pseudo_cls = logits[idx].max(dim=0)[1]
                     self.memory.add_instance([x[idx], entropys[idx], confidences[idx], 0, wdists_test[idx], stats_list[idx], pseudo_cls],rmst)
-            elif adst == 'wdist_custom': # custom min/max threshold from input
-                w_min = self.w_min
-                w_max = self.w_max
-                ids = [i for i, dist in enumerate(wdists_test) if dist > w_min and dist < w_max]
-                sample_number = len(ids)
-                for idx in ids:
-                    pseudo_cls = logits[idx].max(dim=0)[1]
-                    self.memory.add_instance([x[idx], entropys[idx], confidences[idx], 0, wdists_test[idx], stats_list[idx], pseudo_cls], rmst)
-            
+
         if isadapt:
             self.mem = torch.stack(self.memory.get_memory())
             self.mem_age = torch.tensor(self.memory.get_memory_age())
@@ -313,24 +301,6 @@ class RoTTA(AdaptableModule):
             ema_param.data[:] = (1 - nu) * ema_param[:].data[:] + nu * param[:].data[:]
         return ema_model
     
-    def iobmn_get_bn_stats(self, compare_with_test=False):
-        return bn_iobmn_get_bn_stats(self, compare_with_test)
-            
-    def iobmn_get_bn_stats_N(self, N, compare_with_test=False):
-        return bn_iobmn_get_bn_stats_N(self, N, compare_with_test)
-            
-    def retrieve_bn_stats(self, outputs, isadapt):
-        return bn_retrieve_bn_stats(self, outputs, isadapt)
-
-    def retrieve_bn_stats_N(self, outputs, N, isadapt):
-        return bn_retrieve_bn_stats_N(self, outputs, N, isadapt)
-
-    def recalc_bn_stats(self, memtype,compare_with_test=False):
-        return bn_recalc_bn_stats(self, memtype,compare_with_test)
-
-    def check_bn_divergence(self,memtype, mu, sigma2):
-        return bn_check_bn_divergence(self,memtype, mu, sigma2)
-
 @torch.jit.script
 def softmax_entropy(x: torch.Tensor) -> torch.Tensor:
     """Entropy of softmax distribution from logits."""

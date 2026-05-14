@@ -24,8 +24,9 @@ dependencies:
   - xz=5.4.2=h5eee18b_0
   - zlib=1.2.13=h5eee18b_0
   - pip:
+    - --extra-index-url https://download.pytorch.org/whl/cu121
     - appdirs==1.4.4
-    - autoattack==0.1
+    - pyautoattack==0.2.0
     - chardet==4.0.0
     - charset-normalizer==3.3.2
     - click==8.1.7
@@ -70,11 +71,11 @@ dependencies:
     - six==1.16.0
     - smmap==5.0.1
     - sympy==1.12
-    - timm==0.6.13
-    - torch==2.1.1
-    - torchaudio==2.1.1
+    - timm==1.0.9
+    - torch==2.1.1+cu121
+    - torchaudio==2.1.1+cu121
     - torchdiffeq==0.2.3
-    - torchvision==0.16.1
+    - torchvision==0.16.1+cu121
     - tqdm==4.66.1
     - triton==2.1.0
     - typing-extensions==4.8.0

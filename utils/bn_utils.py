@@ -85,7 +85,6 @@ def bn_retrieve_bn_stats(self, outputs, isadapt,layer_t=0):
 
     return wasserstein_distances, stats_list, mu_test, sigma2_test
 
-# FIXXXXXXXXXXXXXXXXXXXXXXXXX
 # calculate WDIST using first N layer BN stats, normalize each layer WDIST using running average of WDIST stats so that each layer gets fair weight,
 # then sums all layers to get one WDIST per image
 # return list of WDIST for each image

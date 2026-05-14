@@ -68,7 +68,7 @@ def prepare_alg(args, subnet, prepare_data):
         params, param_names = Tent.collect_params(subnet)
         optimizer = torch.optim.SGD([{'params': params['affine']}], lr=args.lr,
                                     momentum=args.momentum)
-        adapt_model = Tent(subnet, optimizer, args.e_margin, args.maxage, args.c_margin, args.w_min, args.w_max,layer_t=args.layer_t)
+        adapt_model = Tent(subnet, optimizer, args.e_margin, args.maxage, args.c_margin, layer_t=args.layer_t)
     elif args.alg == 'eta':
         from algorithm.eata import EATA
         subnet = EATA.configure_model(subnet, local_bn=not args.accum_bn)
@@ -152,8 +152,6 @@ def get_args():
     parser.add_argument('--memreset', action='store_true', help='memory reset after adaptation')
     parser.add_argument('--maxage', default=10, type=int, help='maxage for memory')
     parser.add_argument('--confth', default=0.5, type=float, help='threshold for confidence')
-    parser.add_argument('--w_min', default=float('-inf'), type=float, help='minimum threshold for WDIST_TEST in memory')
-    parser.add_argument('--w_max', default=float('inf'), type=float, help='maximum threshold for WDIST_TEST in memory')
     parser.add_argument('--layer_t', type=int, default=0, help='Target layer number to calculate Doamin Centroid.')
     # dataset settings
     parser.add_argument('--level', default=5, type=int, help='corruption level of test(val) set.')

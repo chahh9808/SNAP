@@ -1,7 +1,6 @@
 """Utils for evaluation"""
 import time
 import torch
-# import wandb
 from utils.cli_utils import AverageMeter, ProgressMeter, accuracy
 from utils.latency_track import TimeTracker
 
@@ -34,15 +33,7 @@ def validate(args, val_loader, model, device, stop_at_step=-1):
     bp_time = AverageMeter('Loss Backprop', ':6.4f')
     optstep_time = AverageMeter('Optim Step', ':6.4f')
 
-    if args.prelim is True:
-        data_list = []
-        acc_list = []
-        wass_correctness_list = []
-        conf_correctness_list = []
-        if args.label_flip is True:
-            flip_list = []
-    else:
-        data_list = None
+    data_list = None
     
     batch_num = len(val_loader)
     progress = ProgressMeter(
@@ -75,7 +66,6 @@ def validate(args, val_loader, model, device, stop_at_step=-1):
             if args.print > 0:
                 if i % args.print == 0:
                     progress.display(i)
-            # wandb.log({'batch acc': acc1}, commit=True)
 
             if stop_at_step > 0 and i >= stop_at_step:
                 break
